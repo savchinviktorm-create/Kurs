@@ -1,0 +1,16 @@
+{
+  "slug": "new-course-slug",
+  "title": "Повна назва нового курсу",
+  "short_title": "Коротка назва",
+  "intro_text": "Оригінальний вступ без скорочень.",
+  "total_steps": 30,
+  "timezone": "Europe/Kyiv",
+  "unlock_hour": 11,
+  "restart_offer_after_missed_days": 5,
+  "is_free": false,
+  "one_time_price_stars": 99,
+  "logo_path": "/new-course-logo.png",
+  "steps": [
+    { "step_number": 1, "title": "Назва кроку 1", "content": "Повний оригінальний текст кроку 1" }
+  ]
+}
