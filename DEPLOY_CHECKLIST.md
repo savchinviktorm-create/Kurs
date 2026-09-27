@@ -36,3 +36,12 @@
 - [ ] Зробив тестову покупку Stars.
 - [ ] Перевірив `successful_payment` і entitlement.
 - [ ] Для приватного відео використовую private Stream/S3 provider + watermark.
+
+## Додатково для v2.1
+
+- [ ] На чинній v2 базі виконано `supabase/migrations/003_course_learning_experience.sql`.
+- [ ] Vercel deployment після оновлення v2.1 має статус Ready.
+- [ ] У `/admin` відкривається редактор quiz.
+- [ ] Тестовий Course Package v2 імпортує logo/cover та залишається чернеткою.
+- [ ] У Mini App image-блок відображається як зображення, PDF — у внутрішньому viewer.
+- [ ] Required checklist + quiz не дозволяють завершити заняття до виконання.

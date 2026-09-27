@@ -83,7 +83,7 @@ export default function HomePage() {
             const href = `/course/${course.slug}?space=${encodeURIComponent(data.space.slug)}&lang=${encodeURIComponent(data.locale)}`;
             return (
               <article className="courseCard" key={course.slug}>
-                <div className="courseLogoWrap"><img src={course.logo_path || '/technology-changes-logo.png'} alt="" /></div>
+                <div className="courseLogoWrap"><img src={course.cover_path || course.logo_path || '/technology-changes-logo.png'} alt="" /></div>
                 <div className="courseBody">
                   <div className="pill">{course.is_free ? tr('free') : locked ? tr('paid') : tr('accessActive')}</div>
                   <h3>{course.short_title}</h3>

@@ -414,7 +414,7 @@ create table if not exists public.course_step_blocks (
   course_slug text not null,
   step_number integer not null,
   locale text,
-  block_type text not null check (block_type in ('text','video','audio','pdf','image','file','link','quote','checklist','divider')),
+  block_type text not null check (block_type in ('text','video','audio','pdf','image','file','link','quote','checklist','quiz','divider')),
   sort_order integer not null default 100,
   title text,
   body text,
@@ -427,6 +427,24 @@ create table if not exists public.course_step_blocks (
 );
 
 create index if not exists blocks_step_idx on public.course_step_blocks(course_slug, step_number, locale, sort_order);
+
+create table if not exists public.course_step_interactions (
+  id uuid primary key default gen_random_uuid(),
+  attempt_id uuid not null references public.course_attempts(id) on delete cascade,
+  telegram_id bigint not null references public.users(telegram_id) on delete cascade,
+  course_slug text not null references public.courses(slug) on delete cascade,
+  step_number integer not null,
+  block_id uuid not null references public.course_step_blocks(id) on delete cascade,
+  interaction_type text not null check (interaction_type in ('quiz','checklist')),
+  state jsonb not null default '{}'::jsonb,
+  completed boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(attempt_id, block_id)
+);
+
+create index if not exists course_step_interactions_attempt_idx on public.course_step_interactions(attempt_id, step_number);
+create index if not exists course_step_interactions_user_idx on public.course_step_interactions(telegram_id, course_slug);
 create index if not exists media_provider_idx on public.media_assets(provider_key, status);
 
 create table if not exists public.course_versions (
@@ -710,6 +728,7 @@ alter table public.subscription_plans enable row level security;
 alter table public.media_providers enable row level security;
 alter table public.media_assets enable row level security;
 alter table public.course_step_blocks enable row level security;
+alter table public.course_step_interactions enable row level security;
 alter table public.course_versions enable row level security;
 alter table public.course_imports enable row level security;
 alter table public.share_events enable row level security;

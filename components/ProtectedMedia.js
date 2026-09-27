@@ -122,6 +122,9 @@ export default function ProtectedMedia({ mediaId, spaceSlug, watermark }) {
   }
   const src = data.delivery?.stream_url;
   if (data.delivery?.kind === 'pdf') return <PdfCanvasViewer url={src} watermark={watermark} watermarkEnabled={wm} />;
+  if (data.delivery?.kind === 'image') {
+    return <div className="imageFrame protectedSurface" onContextMenu={e => e.preventDefault()}><img src={src} alt={data.media.title || ''} draggable="false" /><Watermark text={watermark} enabled={wm} /></div>;
+  }
   if (data.delivery?.kind === 'audio') {
     return (
       <div className="audioFrame protectedSurface" onContextMenu={e => e.preventDefault()}>
@@ -130,5 +133,6 @@ export default function ProtectedMedia({ mediaId, spaceSlug, watermark }) {
       </div>
     );
   }
+  if (data.delivery?.kind === 'file') return <div className="fileFrame"><a className="secondary linkButton" href={src} target="_blank" rel="noreferrer">Відкрити файл</a></div>;
   return <StreamVideo kind={data.delivery?.kind || 'video'} src={src} poster={data.media.poster_url} watermark={watermark} watermarkEnabled={wm} />;
 }

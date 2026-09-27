@@ -1,86 +1,93 @@
-# Course Package v1
+# Course Package v2
 
-Course Package — це один ZIP, який власник завантажує через **Адмінка → Імпорт**. Після імпорту курс завжди створюється/оновлюється як **чернетка**, а не публікується автоматично.
+Course Package — це один ZIP, який власник завантажує через **Адмінка → Імпорт**. Після імпорту курс завжди залишається **чернеткою** (`is_published=false`) і не з'являється користувачам, доки адміністратор його не перевірить та не опублікує.
 
 ## Обов'язковий файл
 
 У корені ZIP має бути `manifest.json` у UTF-8.
 
-Мінімальна структура:
-
 ```json
 {
-  "format": "course-package-v1",
-  "version": "1.0",
+  "format": "course-package-v2",
+  "version": "2.1-2026-09-27",
+  "mode": "update",
   "course": {
     "slug": "focus-30",
     "title": "Фокус",
     "short_title": "Фокус",
+    "description": "Короткий опис",
+    "intro_text": "Вступ",
+    "logo_file": "brand/logo.png",
+    "cover_file": "brand/cover.png",
     "default_locale": "uk",
-    "available_locales": ["uk", "ru"],
+    "available_locales": ["uk"],
     "is_free": false,
     "one_time_price_stars": 99,
     "included_in_subscription": true,
     "first_step_immediate": true,
-    "unlock_hour": 11,
-    "restart_offer_after_missed_days": 5,
+    "max_steps_per_day": 30,
     "protection_level": "maximum",
+    "settings": {
+      "pacing": "self_paced",
+      "step_label": {"uk":"ЗАНЯТТЯ"},
+      "show_week": false,
+      "return_after_days": 5,
+      "finish_title": "Курс завершено",
+      "finish_text": "..."
+    },
     "locales": {
-      "uk": { "title": "Фокус", "short_title": "Фокус", "intro_text": "..." },
-      "ru": { "title": "Фокус", "short_title": "Фокус", "intro_text": "..." }
+      "uk": {"title":"Фокус","short_title":"Фокус","intro_text":"..."}
     }
   },
-  "spaces": [
-    { "slug": "pkk", "is_visible": false }
-  ],
+  "spaces": [{"slug":"pkk","is_visible":false}],
   "media": [],
-  "steps": [
-    {
-      "step_number": 1,
-      "title": "Старт",
-      "content": "...",
-      "locales": {
-        "uk": { "title": "Старт", "content": "..." },
-        "ru": { "title": "Старт", "content": "..." }
-      },
-      "blocks": []
-    }
-  ]
+  "steps": []
 }
 ```
+
+## Бренд-файли
+
+У v2 можна покласти логотип та обкладинку прямо у ZIP:
+
+```json
+"logo_file": "brand/logo.png",
+"cover_file": "brand/cover.png"
+```
+
+Під час імпорту вони автоматично завантажуються у public bucket `course-public`, а в БД записується готовий URL. Це дозволяє імпортувати курс одним файлом без ручного завантаження обкладинок.
 
 ## Медіа
 
-Рекомендований варіант для великих відео/аудіо — **не вкладати гігабайти в ZIP**, а передавати ID/URL уже завантаженого медіа-провайдера:
-
-```json
-"media": [
-  {
-    "key": "lesson1-video",
-    "provider_key": "youtube",
-    "media_type": "video",
-    "title": "Відео уроку",
-    "source_locator": "YOUTUBE_VIDEO_ID",
-    "protection_level": "enhanced",
-    "watermark_enabled": true
-  }
-]
-```
-
-Для приватного Supabase Storage можна покласти невеликий файл у ZIP:
+Невеликі матеріали можна вкладати у ZIP:
 
 ```json
 {
-  "key": "worksheet",
-  "file": "media/worksheet.pdf",
+  "key": "workbook",
+  "file": "media/workbook.pdf",
   "media_type": "pdf",
-  "title": "Робочий зошит"
+  "title": "Робочий зошит",
+  "protection_level": "maximum",
+  "watermark_enabled": true
 }
 ```
 
-Під час імпорту він потрапить у приватний bucket `course-media`.
+Для великих відео/аудіо рекомендовано використовувати провайдери:
 
-## Блоки кроку
+```json
+{
+  "key": "lesson1-video",
+  "provider_key": "youtube",
+  "media_type": "video",
+  "title": "Відео уроку",
+  "source_locator": "YOUTUBE_VIDEO_ID",
+  "protection_level": "enhanced",
+  "watermark_enabled": true
+}
+```
+
+Підтримуються Supabase Storage, YouTube, Vimeo, Cloudflare Stream, Bunny Stream, S3-compatible, HLS, DASH, iframe/direct відповідно до налаштованих Media Providers.
+
+## Блоки заняття
 
 Підтримуються:
 
@@ -93,34 +100,66 @@ Course Package — це один ZIP, який власник завантажу
 - `link`
 - `quote`
 - `checklist`
+- `quiz`
 - `divider`
 
-Приклад:
+### Checklist
 
 ```json
-"blocks": [
-  {
-    "type": "video",
-    "title": "Подивіться пояснення",
-    "media_key": "lesson1-video"
-  },
-  {
-    "type": "quote",
-    "body": "Коротка авторська цитата."
+{
+  "type":"checklist",
+  "title":"Критерії готовності",
+  "config": {
+    "items":["Пункт 1","Пункт 2"],
+    "required":true
   }
-]
+}
 ```
 
-## Оновлення готового курсу
+Якщо `required=true`, користувач не зможе завершити заняття, доки не відмітить усі пункти. Стан зберігається на сервері в межах поточної спроби проходження.
 
-Щоб імпорт оновив існуючий `slug`, а не зупинився з помилкою, додайте:
+### Quiz
+
+```json
+{
+  "type":"quiz",
+  "title":"Перевірте себе",
+  "config": {
+    "required":true,
+    "answer_policy":"after_attempt",
+    "questions":[
+      {
+        "id":"q1",
+        "question":"Питання?",
+        "options":["A","B","C"],
+        "correct_index":1,
+        "explanation":"Пояснення після спроби."
+      }
+    ]
+  }
+}
+```
+
+Відповіді зберігаються на сервері. Пояснення та правильні варіанти показуються після натискання **«Перевірити відповіді»**. Якщо quiz обов'язковий, для завершення заняття достатньо виконати спробу; правильність не використовується як жорсткий бар'єр, якщо автор окремо не створить іншу логіку.
+
+## Self-paced
+
+Для курсу, який можна пройти у власному темпі:
+
+```json
+"max_steps_per_day": 30,
+"settings": {
+  "pacing":"self_paced",
+  "show_week":false
+}
+```
+
+`max_steps_per_day` має бути не менше максимальної кількості занять, які користувач може пройти за добу.
+
+## Оновлення курсу
 
 ```json
 "mode": "update"
 ```
 
-Прогрес користувачів при цьому не видаляється. Для великих структурних змін рекомендовано створити нову версію/перевірити курс у чернетці перед публікацією.
-
-## Важливе про DOCX/PPTX/XLSX
-
-Вбудований користувацький переглядач працює з PDF. Office-файли можна зберігати як оригінали, але для inline-перегляду підготуйте PDF-копію. У проєкті залишена змінна `DOCUMENT_CONVERTER_URL` для майбутнього підключення зовнішнього конвертера; Vercel serverless не комплектується LibreOffice.
+Якщо slug уже існує, імпорт оновлює структуру чернетки, але не видаляє прогрес користувачів. Для великих структурних змін користуйтеся історією версій та попереднім переглядом.

@@ -500,3 +500,9 @@ OK: 91 steps; structured text exactly matches the original course file.
 - якщо задано `DOCUMENT_CONVERTER_TOKEN`, додається `Authorization: Bearer ...`.
 
 Converter може повернути або `application/pdf` напряму, або JSON `{ "url": "https://.../converted.pdf" }`. Отримана PDF-копія переноситься у приватний Supabase Storage; оригінал зберігається окремо в metadata.
+
+## Platform v2.1
+
+Для інтерактивних Course Package v2 використовуйте migration `supabase/migrations/003_course_learning_experience.sql`.
+Нові можливості: quiz, required checklist, self-paced UX, імпорт logo/cover із ZIP, server-side progress for interactive blocks, final course resources.
+Деталі оновлення: `UPDATE_V2.1_UA.md`.
