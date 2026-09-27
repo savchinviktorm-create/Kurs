@@ -1,0 +1,5 @@
+import { requireAdmin } from '@/lib/admin';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { jsonError } from '@/lib/telegram';
+export const runtime='nodejs'; export const dynamic='force-dynamic';
+export async function GET(request){try{await requireAdmin(request,'support');const sb=getSupabaseAdmin();const q=new URL(request.url).searchParams.get('q')||'';let query=sb.from('users').select('telegram_id,first_name,last_name,username,language_code,created_at,updated_at,course_attempts(id,course_slug,status,completed_steps,current_step,last_completed_at,finished_at),subscriptions(plan_key,expires_at),entitlements(course_slug,created_at)').order('updated_at',{ascending:false}).limit(200);if(q){if(/^\d+$/.test(q))query=query.eq('telegram_id',Number(q));else query=query.or(`username.ilike.%${q.replace(/[%(),]/g,'')}%,first_name.ilike.%${q.replace(/[%(),]/g,'')}%`);}const{data,error}=await query;if(error)throw error;return Response.json({ok:true,users:data||[]});}catch(e){return jsonError(e,403)}}

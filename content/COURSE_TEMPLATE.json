@@ -1,16 +1,41 @@
 {
-  "slug": "new-course-slug",
-  "title": "Повна назва нового курсу",
-  "short_title": "Коротка назва",
-  "intro_text": "Оригінальний вступ без скорочень.",
-  "total_steps": 30,
-  "timezone": "Europe/Kyiv",
-  "unlock_hour": 11,
-  "restart_offer_after_missed_days": 5,
-  "is_free": false,
-  "one_time_price_stars": 99,
-  "logo_path": "/new-course-logo.png",
+  "format": "course-package-v1",
+  "version": "1.0",
+  "course": {
+    "slug": "new-course-slug",
+    "title": "Повна назва нового курсу",
+    "short_title": "Коротка назва",
+    "description": "Короткий опис",
+    "intro_text": "Оригінальний вступ без скорочень.",
+    "default_locale": "uk",
+    "available_locales": ["uk", "ru"],
+    "timezone": "Europe/Kyiv",
+    "unlock_hour": 11,
+    "restart_offer_after_missed_days": 5,
+    "first_step_immediate": true,
+    "is_free": false,
+    "one_time_price_stars": 99,
+    "included_in_subscription": true,
+    "protection_level": "enhanced",
+    "locales": {
+      "uk": { "title": "Назва", "short_title": "Назва", "intro_text": "Повний вступ" },
+      "ru": { "title": "Название", "short_title": "Название", "intro_text": "Полное вступление" }
+    }
+  },
+  "spaces": [
+    { "slug": "pkk", "is_visible": false }
+  ],
+  "media": [],
   "steps": [
-    { "step_number": 1, "title": "Назва кроку 1", "content": "Повний оригінальний текст кроку 1" }
+    {
+      "step_number": 1,
+      "title": "Назва кроку 1",
+      "content": "Повний оригінальний текст кроку 1",
+      "locales": {
+        "uk": { "title": "Назва кроку 1", "content": "Повний текст" },
+        "ru": { "title": "Название шага 1", "content": "Полный текст" }
+      },
+      "blocks": []
+    }
   ]
 }

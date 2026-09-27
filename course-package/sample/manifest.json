@@ -1,0 +1,39 @@
+{
+  "format": "course-package-v1",
+  "version": "1.0",
+  "course": {
+    "slug": "demo-course",
+    "title": "Демонстраційний курс",
+    "short_title": "Demo",
+    "description": "Приклад пакета для перевірки імпорту.",
+    "intro_text": "Це тестовий вступ.",
+    "default_locale": "uk",
+    "available_locales": ["uk", "ru"],
+    "is_free": true,
+    "included_in_subscription": false,
+    "first_step_immediate": true,
+    "unlock_hour": 11,
+    "restart_offer_after_missed_days": 5,
+    "protection_level": "enhanced",
+    "locales": {
+      "uk": {"title":"Демонстраційний курс","short_title":"Demo","intro_text":"Це тестовий вступ."},
+      "ru": {"title":"Демонстрационный курс","short_title":"Demo","intro_text":"Это тестовое вступление."}
+    }
+  },
+  "spaces": [{"slug":"pkk","is_visible":false}],
+  "media": [],
+  "steps": [
+    {
+      "step_number": 1,
+      "title": "Перший крок",
+      "content": "Тестовий текст першого кроку.",
+      "locales": {
+        "uk": {"title":"Перший крок","content":"Тестовий текст першого кроку."},
+        "ru": {"title":"Первый шаг","content":"Тестовый текст первого шага."}
+      },
+      "blocks": [
+        {"type":"quote","body":"Це приклад додаткового блоку."}
+      ]
+    }
+  ]
+}

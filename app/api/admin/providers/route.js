@@ -1,0 +1,6 @@
+import { requireAdmin, auditAdmin } from '@/lib/admin';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { jsonError } from '@/lib/telegram';
+export const runtime='nodejs'; export const dynamic='force-dynamic';
+export async function GET(request){try{await requireAdmin(request,'analyst');const sb=getSupabaseAdmin();const{data,error}=await sb.from('media_providers').select('*').order('sort_order');if(error)throw error;return Response.json({ok:true,providers:data||[]});}catch(e){return jsonError(e,403)}}
+export async function POST(request){try{const{admin}=await requireAdmin(request,'admin');const b=await request.json();const sb=getSupabaseAdmin();const key=String(b.provider_key||'').toLowerCase().replace(/[^a-z0-9-]+/g,'-');if(!key)throw new Error('INVALID_PROVIDER_KEY');const row={provider_key:key,display_name:b.display_name||key,provider_type:b.provider_type||'generic',delivery_type:b.delivery_type||'direct',config:b.config||{},secret_env_prefix:b.secret_env_prefix||null,is_enabled:b.is_enabled!==false,sort_order:Number(b.sort_order||100),updated_at:new Date().toISOString()};const{error}=await sb.from('media_providers').upsert(row,{onConflict:'provider_key'});if(error)throw error;await auditAdmin(admin.telegram_id,'provider.upsert','media_provider',key);return Response.json({ok:true,provider_key:key});}catch(e){return jsonError(e,400)}}
