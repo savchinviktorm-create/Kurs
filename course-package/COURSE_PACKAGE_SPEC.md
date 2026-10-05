@@ -9,7 +9,7 @@ Course Package — це один ZIP, який власник завантажу
 ```json
 {
   "format": "course-package-v2",
-  "version": "2.1-2026-09-27",
+  "version": "2.2-2026-10-04",
   "mode": "update",
   "course": {
     "slug": "focus-30",
@@ -24,6 +24,16 @@ Course Package — це один ZIP, який власник завантажу
     "is_free": false,
     "one_time_price_stars": 99,
     "included_in_subscription": true,
+    "trial_enabled": true,
+    "trial_days": 5,
+    "trial_max_steps": 3,
+    "certificate_enabled": true,
+    "certificate_settings": {
+      "verification_enabled": true,
+      "subtitle": "Сертифікат про завершення курсу",
+      "signatory_name": "",
+      "signatory_title": ""
+    },
     "first_step_immediate": true,
     "max_steps_per_day": 30,
     "protection_level": "maximum",
@@ -163,3 +173,33 @@ Course Package — це один ZIP, який власник завантажу
 ```
 
 Якщо slug уже існує, імпорт оновлює структуру чернетки, але не видаляє прогрес користувачів. Для великих структурних змін користуйтеся історією версій та попереднім переглядом.
+
+## Пробний доступ (v2.2)
+
+Для платного курсу можна активувати одноразовий ознайомчий період:
+
+```json
+"trial_enabled": true,
+"trial_days": 5,
+"trial_max_steps": 3
+```
+
+- `trial_days` — ціле число з кроком 1 (мінімум 1 день).
+- `trial_max_steps` — необов'язковий ліміт безкоштовних кроків. `null` означає без ліміту за кроками.
+- Trial одноразовий для пари Telegram ID + курс.
+- Після завершення trial прогрес не скидається; користувач може купити курс і продовжити з того самого місця.
+- Ціна після trial береться з `one_time_price_stars` або з price override конкретного Простору.
+
+## Сертифікат (v2.2)
+
+```json
+"certificate_enabled": true,
+"certificate_settings": {
+  "verification_enabled": true,
+  "subtitle": "Сертифікат про завершення курсу",
+  "signatory_name": "",
+  "signatory_title": ""
+}
+```
+
+Після завершення останнього кроку користувач вводить ПІБ. Платформа формує персональний сертифікат A4 landscape у стилі Простору, автоматично підтягує назву курсу та дату завершення, створює унікальний номер і QR-посилання для перевірки.

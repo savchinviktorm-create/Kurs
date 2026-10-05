@@ -506,3 +506,7 @@ Converter може повернути або `application/pdf` напряму, �
 Для інтерактивних Course Package v2 використовуйте migration `supabase/migrations/003_course_learning_experience.sql`.
 Нові можливості: quiz, required checklist, self-paced UX, імпорт logo/cover із ZIP, server-side progress for interactive blocks, final course resources.
 Деталі оновлення: `UPDATE_V2.1_UA.md`.
+
+## v2.2: Trial + Certificates
+
+Версія 2.2 додає керований одноразовий trial для платних курсів і персональні сертифікати про завершення. Обидві функції вимкнені за замовчуванням та налаштовуються окремо для кожного курсу в Admin CMS. Детальна інструкція: `UPDATE_V2.2_UA.md`.

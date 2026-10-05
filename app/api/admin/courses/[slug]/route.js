@@ -18,7 +18,7 @@ export async function GET(request,{params}){
 }
 export async function PUT(request,{params}){
   try{const {admin}=await requireAdmin(request,'editor'); const {slug}=await params; const body=await request.json(); const sb=getSupabaseAdmin();
-    const allowed=['title','short_title','description','intro_text','logo_path','cover_path','timezone','unlock_hour','restart_offer_after_missed_days','is_free','one_time_price_stars','included_in_subscription','is_published','sort_order','first_step_immediate','allow_previous_steps','max_steps_per_day','default_locale','available_locales','protection_level','settings'];
+    const allowed=['title','short_title','description','intro_text','logo_path','cover_path','timezone','unlock_hour','restart_offer_after_missed_days','is_free','one_time_price_stars','included_in_subscription','is_published','sort_order','first_step_immediate','allow_previous_steps','max_steps_per_day','default_locale','available_locales','protection_level','settings','trial_enabled','trial_days','trial_max_steps','certificate_enabled','certificate_settings'];
     const patch={updated_at:new Date().toISOString()}; for(const k of allowed) if(Object.prototype.hasOwnProperty.call(body,k)) patch[k]=body[k];
     if(patch.is_free===true) patch.one_time_price_stars=null;
     const {error}=await sb.from('courses').update(patch).eq('slug',slug); if(error) throw error;

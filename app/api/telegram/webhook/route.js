@@ -68,6 +68,7 @@ async function recordSuccessfulPayment(message) {
   if (parsed.kind === 'course') {
     const { error } = await supabase.from('entitlements').upsert({ telegram_id: message.from.id, course_slug: parsed.courseSlug, access_type: 'permanent', source_payment_charge_id: payment.telegram_payment_charge_id }, { onConflict: 'telegram_id,course_slug' });
     if (error) throw error;
+    await supabase.from('course_trials').update({ status: 'converted', converted_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('telegram_id', message.from.id).eq('course_slug', parsed.courseSlug);
   }
   if (parsed.kind === 'subscription') {
     let fallbackMs = 30 * 24 * 60 * 60 * 1000;

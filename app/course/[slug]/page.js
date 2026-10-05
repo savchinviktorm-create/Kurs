@@ -7,7 +7,8 @@ import Logo from '@/components/Logo';
 import ProgressBar from '@/components/ProgressBar';
 import StepBlocks from '@/components/StepBlocks';
 import ProtectedMedia from '@/components/ProtectedMedia';
-import { apiFetch, haptic } from '@/lib/client-api';
+import CertificatePanel from '@/components/CertificatePanel';
+import { apiFetch, haptic, openTelegramInvoice } from '@/lib/client-api';
 import { t } from '@/lib/i18n';
 
 function Countdown({ target }) {
@@ -53,6 +54,26 @@ export default function CoursePage() {
     } finally { setBusy(false); }
   }
 
+  async function purchaseCourse() {
+    try {
+      setBusy(true); setError(''); haptic('light');
+      const res = await apiFetch('/api/payments/invoice', { method: 'POST', body: JSON.stringify({ type: 'course', course_slug: slug, space_slug: space }) });
+      openTelegramInvoice(res.invoice_url, () => { setBusy(false); setTimeout(load, 1200); });
+    } catch (e) { setBusy(false); setError(e.message); }
+  }
+
+  async function startTrial() {
+    try {
+      setBusy(true); setError(''); haptic('light');
+      await apiFetch(`/api/course/${slug}/trial/start${qs}`, { method: 'POST' });
+      await load();
+    } catch (e) {
+      setError(e.message === 'TRIAL_ALREADY_USED'
+        ? (lang === 'ru' ? 'Пробный период этого курса уже был использован.' : 'Пробний період цього курсу вже було використано.')
+        : e.message);
+    } finally { setBusy(false); }
+  }
+
   async function share() {
     try {
       haptic('light');
@@ -77,7 +98,9 @@ export default function CoursePage() {
   const theme = state.space?.theme || {};
   const shellStyle = { '--space-accent': theme.accent_color || '#b9822f', '--ink': theme.text_color || '#2e241a', ...(theme.background_color ? { background: theme.background_color } : {}) };
 
-  if (!state.access) return <main className="shell center"><div className="card errorCard"><h2>{lang === 'ru' ? 'Нужен доступ к курсу' : 'Потрібен доступ до курсу'}</h2><Link className="primary linkButton" href={home}>{tr('backCourses')}</Link></div></main>;
+  const accessState = state.access_state || {};
+  const trial = accessState.trial || {};
+  if (!state.access) return <main className="shell courseShell" style={shellStyle}><header className="courseHeader"><Link href={home} className="back">{tr('backCourses')}</Link><Logo compact /></header><div className="miniTitle"><span className="eyebrow">{course.short_title}</span></div>{attempt && <ProgressBar completed={attempt.completed_steps} total={course.total_steps} />}{error && <div className="inlineError">{error}</div>}<section className="card trialPaywall"><div className="lockOrb">✦</div><span className="eyebrow">{trial.used ? (lang === 'ru' ? 'ПРОБНЫЙ ДОСТУП ЗАВЕРШЁН' : 'ПРОБНИЙ ДОСТУП ЗАВЕРШЕНО') : (lang === 'ru' ? 'ДОСТУП К КУРСУ' : 'ДОСТУП ДО КУРСУ')}</span><h2>{trial.used ? (lang === 'ru' ? 'Продолжите с того же места' : 'Продовжуйте з того самого місця') : (lang === 'ru' ? 'Попробуйте курс бесплатно' : 'Спробуйте курс безкоштовно')}</h2><p>{trial.used ? (lang === 'ru' ? 'Ваш прогресс сохранён. После оплаты курс откроется с того шага, на котором вы остановились.' : 'Ваш прогрес збережено. Після оплати курс відкриється з того кроку, на якому ви зупинилися.') : (lang === 'ru' ? 'Ознакомьтесь с курсом без оплаты, а затем решите, продолжать ли обучение.' : 'Ознайомтеся з курсом без оплати, а потім вирішіть, чи продовжувати навчання.')}</p>{trial.enabled && trial.eligible && <button className="primary wide" disabled={busy} onClick={startTrial}>{lang === 'ru' ? `Попробовать бесплатно ${trial.days} дн.` : `Спробувати безкоштовно ${trial.days} дн.`}</button>}<button className={trial.enabled && trial.eligible ? 'secondary wide' : 'primary wide'} disabled={busy} onClick={purchaseCourse}>{lang === 'ru' ? 'Получить полный доступ' : 'Отримати повний доступ'} — {accessState.one_time_price_stars || course.one_time_price_stars} ⭐</button></section></main>;
 
   return (
     <main className="shell courseShell" style={shellStyle}>
@@ -101,6 +124,7 @@ export default function CoursePage() {
         <h1>{settings.finish_title || tr('courseFinished')}</h1>
         <div className="courseText finishText">{settings.finish_text || (lang === 'ru' ? 'Результат сохранён в вашем профиле.' : 'Результат збережено у вашому профілі.')}</div>
         <FinishResources resources={settings.finish_resources || []} spaceSlug={space} watermark={wm} />
+        {course.certificate_enabled && <CertificatePanel slug={slug} spaceSlug={space} lang={lang} initialCertificate={state.certificate} course={course} space={state.space} />}
         <button className="secondary" onClick={share}>↗ {tr('share')}</button><Link href={home} className="primary linkButton">{tr('backCourses')}</Link>
       </section>}
 
@@ -112,9 +136,11 @@ export default function CoursePage() {
 
       {attempt?.status === 'active' && state.restart_recommended && <section className="card restartCard"><span className="eyebrow">{tr('missedDays')}</span><h2>{lang === 'ru' ? 'Начать сначала?' : 'Варто почати спочатку?'}</h2><p>{lang === 'ru' ? 'Курс построен на системности и последовательности. Предыдущая попытка останется в истории.' : 'Курс побудований на системності та послідовності. Попередня спроба залишиться в історії.'}</p><button className="secondary wide" disabled={busy} onClick={() => { if (confirm(lang === 'ru' ? 'Архивировать попытку и начать заново?' : 'Архівувати спробу та почати заново?')) action('restart'); }}>{tr('restart')}</button></section>}
 
-      {attempt?.status === 'active' && !state.step_available && <section className="card waitingCard"><div className="lockOrb">✦</div><span className="eyebrow">{tr('nextStep')}</span><h2>{lang === 'ru' ? 'Шаг' : 'Крок'} {attempt.current_step} {tr('stillLocked')}</h2><p>{lang === 'ru' ? 'Пропущенные дни не перескакивают прогресс.' : 'Пропущені дні не перескакують ваш прогрес.'}</p><div className="countdown"><Countdown target={attempt.next_unlock_at} /></div><div className="dateHint">{new Date(attempt.next_unlock_at).toLocaleString(lang === 'ru' ? 'ru-RU' : 'uk-UA')}</div></section>}
+      {attempt?.status === 'active' && state.trial_step_limit_reached && <section className="card trialPaywall"><div className="lockOrb">✦</div><span className="eyebrow">{lang === 'ru' ? 'ОЗНАКОМИТЕЛЬНАЯ ЧАСТЬ ЗАВЕРШЕНА' : 'ОЗНАЙОМЧУ ЧАСТИНУ ЗАВЕРШЕНО'}</span><h2>{lang === 'ru' ? 'Продолжите обучение без потери прогресса' : 'Продовжуйте навчання без втрати прогресу'}</h2><p>{lang === 'ru' ? `Вы уже прошли ${attempt.completed_steps} из ${course.total_steps} шагов. После оплаты продолжите с этого же места.` : `Ви вже пройшли ${attempt.completed_steps} із ${course.total_steps} кроків. Після оплати продовжите з цього самого місця.`}</p><button className="primary wide" disabled={busy} onClick={purchaseCourse}>{lang === 'ru' ? 'Продолжить навсегда' : 'Продовжити назавжди'} — {accessState.one_time_price_stars || course.one_time_price_stars} ⭐</button></section>}
 
-      {attempt?.status === 'active' && state.step_available && step && <section className="card stepCard protectedSurface" onContextMenu={e => course.protection_level !== 'standard' && e.preventDefault()}>
+      {attempt?.status === 'active' && !state.trial_step_limit_reached && !state.step_available && <section className="card waitingCard"><div className="lockOrb">✦</div><span className="eyebrow">{tr('nextStep')}</span><h2>{lang === 'ru' ? 'Шаг' : 'Крок'} {attempt.current_step} {tr('stillLocked')}</h2><p>{lang === 'ru' ? 'Пропущенные дни не перескакивают прогресс.' : 'Пропущені дні не перескакують ваш прогрес.'}</p><div className="countdown"><Countdown target={attempt.next_unlock_at} /></div><div className="dateHint">{new Date(attempt.next_unlock_at).toLocaleString(lang === 'ru' ? 'ru-RU' : 'uk-UA')}</div></section>}
+
+      {attempt?.status === 'active' && !state.trial_step_limit_reached && state.step_available && step && <section className="card stepCard protectedSurface" onContextMenu={e => course.protection_level !== 'standard' && e.preventDefault()}>
         <div className="stepTop"><span className="pill">{stepLabel.toUpperCase()} {step.step_number} / {course.total_steps}</span>{showWeek && <span className="week">{lang === 'ru' ? 'Неделя' : 'Тиждень'} {Math.ceil(step.step_number / 7)} / {Math.ceil(course.total_steps / 7)}</span>}</div>
         <h1 className="stepTitle">{step.title}</h1>
         {step.content && <div className={`courseText stepLead ${course.protection_level !== 'standard' ? 'protectedText' : ''}`}>{step.content}</div>}

@@ -95,6 +95,11 @@ export async function POST(request) {
       default_locale: defaultLocale,
       available_locales: manifest.course.available_locales || Object.keys(manifest.course.locales || { [defaultLocale]: {} }),
       protection_level: manifest.course.protection_level || 'standard',
+      trial_enabled: Boolean(manifest.course.trial_enabled),
+      trial_days: Math.max(1, Number(manifest.course.trial_days || 3)),
+      trial_max_steps: manifest.course.trial_max_steps ? Math.max(1, Number(manifest.course.trial_max_steps)) : null,
+      certificate_enabled: Boolean(manifest.course.certificate_enabled),
+      certificate_settings: manifest.course.certificate_settings || { verification_enabled: true, subtitle: 'Сертифікат про завершення курсу', signatory_name: '', signatory_title: '' },
       settings: manifest.course.settings || {},
       updated_at: new Date().toISOString()
     };

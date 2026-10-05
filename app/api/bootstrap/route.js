@@ -1,6 +1,6 @@
 import { getAuthenticatedTelegramContext, upsertTelegramUser, jsonError } from '@/lib/telegram';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { hasCourseAccess, getSubscriptionState, effectiveCourseConfig } from '@/lib/access';
+import { getCourseAccessState, getSubscriptionState, effectiveCourseConfig } from '@/lib/access';
 import { resolveSpace, resolveUserLocale, getLocalizedSpace, localizeCourse, getAppSetting } from '@/lib/platform';
 import { ALL_ACCESS_SUBSCRIPTION_STARS, DEFAULT_COURSE_PRICE_STARS, TELEGRAM_BOT_USERNAME, TELEGRAM_MINIAPP_SHORT_NAME } from '@/lib/env';
 
@@ -54,7 +54,8 @@ export async function GET(request) {
       const course = await localizeCourse(baseCourse, locale, space.default_locale || 'uk');
       if (space.locale_policy === 'hide_missing' && !course.has_requested_locale) continue;
       const effective = effectiveCourseConfig(course, link);
-      const access = await hasCourseAccess(user.id, course, link);
+      const accessState = await getCourseAccessState(user.id, course, link);
+      const access = accessState.access;
       const { data: attempt, error: attemptError } = await supabase
         .from('course_attempts')
         .select('status,completed_steps,current_step,next_unlock_at,finished_at')
@@ -69,6 +70,7 @@ export async function GET(request) {
         ...course,
         ...effective,
         access,
+        access_state: accessState,
         attempt,
         space_sort_order: link.sort_order
       });
@@ -85,6 +87,12 @@ export async function GET(request) {
     const { data: admin } = await supabase.from('admin_users').select('role,enabled').eq('telegram_id', user.id).maybeSingle();
     const donationOptions = await getAppSetting('donation_options', [10,25,50,100]);
     const hasPaidCourses = enriched.some(c => !c.is_free);
+    const { count: certificateCount, error: certificateCountError } = await supabase
+      .from('course_certificates')
+      .select('id', { count: 'exact', head: true })
+      .eq('telegram_id', user.id)
+      .eq('status', 'issued');
+    if (certificateCountError) throw certificateCountError;
 
     return Response.json({
       ok: true,
@@ -97,6 +105,7 @@ export async function GET(request) {
       },
       is_admin: Boolean(admin?.enabled),
       admin_role: admin?.enabled ? admin.role : null,
+      certificate_count: certificateCount || 0,
       locale,
       available_locales: space.allowed_locales || ['uk'],
       space: localizedSpace,

@@ -1,6 +1,6 @@
 {
-  "format": "course-package-v1",
-  "version": "1.0",
+  "format": "course-package-v2",
+  "version": "2.2-template",
   "course": {
     "slug": "new-course-slug",
     "title": "Повна назва нового курсу",
@@ -8,7 +8,10 @@
     "description": "Короткий опис",
     "intro_text": "Оригінальний вступ без скорочень.",
     "default_locale": "uk",
-    "available_locales": ["uk", "ru"],
+    "available_locales": [
+      "uk",
+      "ru"
+    ],
     "timezone": "Europe/Kyiv",
     "unlock_hour": 11,
     "restart_offer_after_missed_days": 5,
@@ -18,12 +21,33 @@
     "included_in_subscription": true,
     "protection_level": "enhanced",
     "locales": {
-      "uk": { "title": "Назва", "short_title": "Назва", "intro_text": "Повний вступ" },
-      "ru": { "title": "Название", "short_title": "Название", "intro_text": "Полное вступление" }
+      "uk": {
+        "title": "Назва",
+        "short_title": "Назва",
+        "intro_text": "Повний вступ"
+      },
+      "ru": {
+        "title": "Название",
+        "short_title": "Название",
+        "intro_text": "Полное вступление"
+      }
+    },
+    "trial_enabled": false,
+    "trial_days": 3,
+    "trial_max_steps": null,
+    "certificate_enabled": false,
+    "certificate_settings": {
+      "verification_enabled": true,
+      "subtitle": "Сертифікат про завершення курсу",
+      "signatory_name": "",
+      "signatory_title": ""
     }
   },
   "spaces": [
-    { "slug": "pkk", "is_visible": false }
+    {
+      "slug": "pkk",
+      "is_visible": false
+    }
   ],
   "media": [],
   "steps": [
@@ -32,8 +56,14 @@
       "title": "Назва кроку 1",
       "content": "Повний оригінальний текст кроку 1",
       "locales": {
-        "uk": { "title": "Назва кроку 1", "content": "Повний текст" },
-        "ru": { "title": "Название шага 1", "content": "Полный текст" }
+        "uk": {
+          "title": "Назва кроку 1",
+          "content": "Повний текст"
+        },
+        "ru": {
+          "title": "Название шага 1",
+          "content": "Полный текст"
+        }
       },
       "blocks": []
     }

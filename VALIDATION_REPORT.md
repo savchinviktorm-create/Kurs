@@ -1,17 +1,40 @@
-# Validation report — Platform v2.1
+# Validation Report — Telegram Course Platform v2.2
 
-Дата підготовки: 2026-09-27
+Дата: 2026-10-04
 
-Перевірено перед упаковкою:
+## Перевірено
 
-- `content/technology-changes-original.txt` ↔ `content/technology-changes.json`: **91/91 кроків, текстова тотожність підтверджена**.
-- SHA-256 авторського джерела: `824a5f466b19aa47452a9537a060d78c1ec419189bf0efd0c3b284bac3112867`.
-- Усі JS/JSX/MJS файли v2.1 пройшли синтаксичний parse через TypeScript parser: **0 syntax errors**.
-- Course Package `digital-millionaire-course-package-v2.zip` перевірено: 10 послідовних занять, 12 media assets, 20 quiz questions, усі локальні file/media references існують.
-- Розмір готового Course Package: ~3.43 MB, тобто він проходить стандартний `COURSE_IMPORT_MAX_BYTES=4000000`.
-- Додана upgrade migration `003_course_learning_experience.sql` без видалення чинних користувачів/прогресу.
-- `FRESH_INSTALL.sql` синхронізовано з v2.1 (`quiz` + `course_step_interactions`).
+- JSON-файли проєкту успішно парсяться.
+- 54 server-side JS/MJS файли (`lib`, `app/api`, `scripts`) пройшли `node --check`.
+- Нові API routes для trial та certificates пройшли синтаксичну перевірку Node.
+- `content/technology-changes-original.txt` не змінений відносно v2.1.
+- `content/technology-changes.json` не змінений відносно v2.1.
+- SHA-256 оригінального тексту курсу: `824a5f466b19aa47452a9537a060d78c1ec419189bf0efd0c3b284bac3112867`.
+- Міграція `004_certificates_and_trials.sql` є адитивною: не видаляє існуючі таблиці/курси/спроби/платежі.
+- `FRESH_INSTALL.sql` містить схему v2.2.
+- Course Package importer приймає `trial_*` і `certificate_*` поля.
+- Поточні курси після міграції мають trial/certificate вимкненими за замовчуванням.
 
-## Що вимагає production-перевірки
+## Реалізовані сценарії v2.2
 
-Повний `next build` у цьому контейнері не запускався зі встановленням npm dependencies. Остаточну production-перевірку виконує Vercel після deployment. Після оновлення перевірте сценарій із `UPDATE_V2.1_UA.md`.
+### Trial
+- одноразовість за Telegram ID + course slug;
+- тривалість у днях;
+- необов'язковий ліміт кроків;
+- збереження прогресу після завершення trial;
+- paywall із реальною ціною курсу/Space override;
+- перехід trial → converted після успішної разової оплати курсу.
+
+### Certificate
+- видача тільки після `course_attempts.status = finished`;
+- введення та підтвердження ПІБ;
+- snapshot назви курсу та бренду Space;
+- дата фактичного завершення;
+- унікальний номер + verification code;
+- QR verification page;
+- preview + PDF + share;
+- повторне відкриття через «Мої сертифікати».
+
+## Обмеження локальної перевірки
+
+Повний `next build` у робочому середовищі не був завершений, тому що `npm install` перевищив доступний мережевий timeout. Це не помилка коду, але фінальний production build обов'язково слід підтвердити у Vercel після завантаження архіву. Vercel має встановити нову залежність `qrcode` з `package.json`.

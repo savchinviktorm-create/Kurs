@@ -41,6 +41,20 @@ export default function HomePage() {
     router.replace(`/course/${data.entry.course_slug}?${params.toString()}`);
   }, [data?.entry?.course_slug]);
 
+
+  async function startTrial(course) {
+    try {
+      setPaying(true); haptic('light'); setError('');
+      const qs = new URLSearchParams({ space: data.space.slug, lang: data.locale });
+      await apiFetch(`/api/course/${course.slug}/trial/start?${qs.toString()}`, { method: 'POST' });
+      await load(locale);
+    } catch (e) {
+      setError(e.message === 'TRIAL_ALREADY_USED'
+        ? (data?.locale === 'ru' ? 'Пробный период этого курса уже был использован.' : 'Пробний період цього курсу вже було використано.')
+        : e.message);
+    } finally { setPaying(false); }
+  }
+
   async function invoice(body) {
     try {
       setPaying(true); haptic('light');
@@ -50,7 +64,7 @@ export default function HomePage() {
   }
 
   if (!data && !error) return <main className="shell center"><div className="loader" /><p>Завантажуємо ваш простір…</p></main>;
-  if (error) return <main className="shell center"><Logo /><div className="card errorCard"><h2>Не вдалося відкрити профіль</h2><p>Відкрийте застосунок через Telegram-бот.</p><code>{error}</code><button className="primary" onClick={() => load(locale)}>Спробувати ще раз</button></div></main>;
+  if (error && !data) return <main className="shell center"><Logo /><div className="card errorCard"><h2>Не вдалося відкрити профіль</h2><p>Відкрийте застосунок через Telegram-бот.</p><code>{error}</code><button className="primary" onClick={() => load(locale)}>Спробувати ще раз</button></div></main>;
 
   const tr = (key) => t(data.locale, key);
   const theme = data.space?.theme || {};
@@ -60,8 +74,11 @@ export default function HomePage() {
     <main className="shell" style={style}>
       <div className="topUtility">
         <LanguageSwitch locale={data.locale} available={data.available_locales} onChange={(l) => { setLocale(l); load(l); }} />
+        {data.certificate_count > 0 && <Link className="adminShortcut" href="/certificates">🎓 {data.locale === 'ru' ? 'Сертификаты' : 'Сертифікати'}</Link>}
         {data.is_admin && <Link className="adminShortcut" href="/admin">⚙ {tr('admin')}</Link>}
       </div>
+
+      {error && <div className="inlineError">{error}</div>}
 
       <section className="hero">
         {data.space.logo_path ? <div className="logo"><img src={data.space.logo_path} alt="" /></div> : <Logo />}
@@ -80,18 +97,29 @@ export default function HomePage() {
             const attempt = course.attempt;
             const completed = attempt?.completed_steps || 0;
             const locked = !course.access;
+            const accessState = course.access_state || {};
+            const trial = accessState.trial || {};
             const href = `/course/${course.slug}?space=${encodeURIComponent(data.space.slug)}&lang=${encodeURIComponent(data.locale)}`;
+            const trialDaysLeft = trial.active && trial.ends_at ? Math.max(1, Math.ceil((new Date(trial.ends_at).getTime() - Date.now()) / 86400000)) : null;
+            const badge = course.is_free
+              ? tr('free')
+              : accessState.mode === 'trial'
+                ? (data.locale === 'ru' ? `ПРОБНЫЙ ДОСТУП · ${trialDaysLeft} дн.` : `ПРОБНИЙ ДОСТУП · ${trialDaysLeft} дн.`)
+                : locked ? tr('paid') : tr('accessActive');
             return (
               <article className="courseCard" key={course.slug}>
                 <div className="courseLogoWrap"><img src={course.cover_path || course.logo_path || '/technology-changes-logo.png'} alt="" /></div>
                 <div className="courseBody">
-                  <div className="pill">{course.is_free ? tr('free') : locked ? tr('paid') : tr('accessActive')}</div>
+                  <div className="pill">{badge}</div>
                   <h3>{course.short_title}</h3>
                   {course.description && <p>{course.description}</p>}
                   <p>{course.total_steps} {tr('steps')}</p>
                   {attempt && <ProgressBar completed={completed} total={course.total_steps} />}
                   {locked ? (
-                    <button className="primary" disabled={paying} onClick={() => invoice({ type: 'course', course_slug: course.slug })}>{tr('buyForever')} — {course.one_time_price_stars} ⭐</button>
+                    <div className="coursePurchaseActions">
+                      {trial.enabled && trial.eligible && <button className="primary" disabled={paying} onClick={() => startTrial(course)}>{data.locale === 'ru' ? `Попробовать бесплатно ${trial.days} дн.` : `Спробувати безкоштовно ${trial.days} дн.`}</button>}
+                      <button className={trial.enabled && trial.eligible ? 'secondary' : 'primary'} disabled={paying} onClick={() => invoice({ type: 'course', course_slug: course.slug })}>{trial.used ? (data.locale === 'ru' ? 'Продолжить навсегда' : 'Продовжити назавжди') : tr('buyForever')} — {course.one_time_price_stars} ⭐</button>
+                    </div>
                   ) : <Link className="primary linkButton" href={href}>{attempt ? tr('continueCourse') : tr('openCourse')}</Link>}
                 </div>
               </article>
